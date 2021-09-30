@@ -1,4 +1,4 @@
-function [data_included] = split_layers_at_mean(data_included, flag, session_number)
+function [data_included] = split_layers_at_mean(data_included, flag)
 ses13 =[2300 2355 2262; % max 2/3 depth
         1609 1748 1610; % max 4a/b depth
         1353 1432 1302; % max 4c depth
@@ -25,24 +25,12 @@ ses45 = [0 0; % min 2/3 depth
 ses45_split = [0 0; % min 2/3 depth
     73 0; % max 2/3 depth
     422 312; % max 4a/b depth
-    586 431; % max 4ca depth
-    750 550; % max 4cb depth
-    937  742; % max 5 depth
-    1124 933; % max 6 depth
+    586 431; % max 4ca dept
+    750 550; % max 4c depth
+    1124 933; % max 5/6 depth
     1500 1500]; % max WM depth
 
     
-if session_number >= 1 && session_number <= 3
-    bin_edges = ses13_split(:,session_number);
-    y = discretize(-data_included.Cluster_celldepth, -bin_edges);
-    data_included.Cluster_celllayer = y;
-elseif session_number >= 4 && session_number <= 5
-    bin_edges = ses45_split(:, session_number-3);
-    y = discretize(data_included.Cluster_celldepth, bin_edges);
-    data_included.Cluster_celllayer = y;
-end
-
-
     % old 
 %     if flag.split_layers
 %         depths_56 = data_included.Cluster_celldepth(data_included.Cluster_celllayer == 1);

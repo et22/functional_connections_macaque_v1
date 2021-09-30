@@ -1,26 +1,24 @@
 %% load cluster output
 flag = config();
 
-for group_idx = 2:flag.group_cnt
+for group_idx = 1:1%flag.group_cnt
 clearvars -except flag group_idx
-load(flag.cluster_output(group_idx), 'clust_data');
+if ~flag.augment
+    load(flag.cluster_output(group_idx), 'clust_data');
+else
+    load(flag.augment_output, 'clust_data');
+end
 load(flag.postproc_output(group_idx), 'ccg_data');
-flag.figure_dir  = "figures/prez/"+flag.group_labels(group_idx) + "/";
+flag.figure_dir  = "figures/prez/"+flag.group_labels(group_idx) + flag.process_cluster(flag.process_flag)+ "/";
+if flag.augment
+    flag.figure_dir  = "figures/prez/"+flag.group_labels(group_idx) + flag.process_cluster(flag.process_flag)+ "augment/";
+end
 if ~exist(flag.figure_dir, 'dir')
     mkdir(flag.figure_dir)
 end
 %% subsetting ccg_data based on significance
 ccg_data = ccg_data.ccg;
-sig_idx = (ccg_data.noise_std2>flag.sig_min_std ) & ...
-        (ccg_data.peaks>(flag.sig_num_stds*ccg_data.noise_std2 + ccg_data.noise_mean2)) & ...
-        (abs(ccg_data.peak_lag) <= flag.sig_max_lag);
-
-fields = fieldnames(ccg_data);
-for i = 1:length(fields)
-    if ~strcmp(fields{i},'cluster') && ~strcmp(fields{i},'config') && ~strcmp(fields{i},'ccg_control')
-        ccg_data.(fields{i}) = ccg_data.(fields{i})(sig_idx,:);
-    end
-end
+[ccg_data, sig_idx] = get_significant_ccgs(ccg_data, flag);
 
 ccg_data.cl_labels = ["2/3", "4a/b", "4c\alpha", "4c\beta", "5", "6", "WM"];
 ccg_data.sc_labels = ["comp.", "simp."];
@@ -66,7 +64,7 @@ save_close_figures(flag.figure_dir + "silhouette")
 %% plot cluster in 3D tSNE space
 figure('position', [445   113   457   387]);
 for i = 1:clust_data.num_clusters
-    curr_tsne_score = clust_data.tsne_mtx(clust_data.labels==i,:);
+    curr_tsne_score = clust_data.tsne_mtx(clust_data.labels(1:length(clust_data.tsne_mtx))==i,:);
     scatter3(curr_tsne_score(:,3), curr_tsne_score(:,1),curr_tsne_score(:,2),4, 'filled', 'MarkerFaceColor', cmap(i,:), 'MarkerEdgeColor', cmap(i,:))
     hold on;
 end
@@ -82,7 +80,7 @@ save_close_figures(flag.figure_dir + "3dscatter_tsne")
 %figure('position', [445   113   457   387]);
 figure('position',[97    32   645   595]);
 for i = 1:clust_data.num_clusters
-    curr_tsne_score = clust_data.tsne_mtx(clust_data.labels==i,:);
+    curr_tsne_score = clust_data.tsne_mtx(clust_data.labels(1:length( clust_data.tsne_mtx))==i,:);
     scatter(curr_tsne_score(:,1),curr_tsne_score(:,2),4, 'filled', 'MarkerFaceColor', cmap(i,:), 'MarkerEdgeColor', cmap(i,:))
     hold on;
 end
@@ -386,8 +384,8 @@ for k = 2:length(cat_var)
         end
     end
     
-    figure('position', poses(k,:));
     for jj = 1:2
+            figure('position', poses(k,:));
         if jj == 1
             cidx = [1,4];
         else
@@ -407,12 +405,12 @@ for k = 2:length(cat_var)
             p(i).Color = cmap(i,:);
         end
         set(gca, 'xticklabels', pair_lay_labels(cidx), 'xtick', 1:numel(pair_labels(cidx)));
-        xtickangle(90);
+        xtickangle(45);
         currx = xlim;
         ylabel("number of pairs");  
         xlim([0.5, currx(2)+.5])
         set_axis_defaults();
-        save_close_figures(flag.figure_dir + "clust_prop_layer" + int2str(k)) 
+        save_close_figures(flag.figure_dir + "clust_prop_layer" + int2str(k) + int2str(jj)) 
     end
 end
 
@@ -634,78 +632,161 @@ for k = 1:length(cat_var)
     save_close_figures(flag.figure_dir + "clust_prop_withinbet" + int2str(k)) 
 end
 
-%% undirected bar plots
-cat_var = ["cl", "sc", "ct"];
-cat_labs = ["laminae", "func type", "type"];
-for jj = 1:length(cat_var)
-    pre_lab = "pre_" + cat_var(jj);
-    post_lab = "post_" + cat_var(jj);
-    labs = cat_var(jj) + "_labels";
-    for i = 1:length(unique(clust_data.labels))
-        cluster_size(i) = sum(clust_data.labels == i);
+
+if flag.plot_all_bars
+    %% undirected bar plots
+    cat_var = ["cl", "sc", "ct"];
+    cat_labs = ["laminae", "func type", "type"];
+    for jj = 1:length(cat_var)
+        pre_lab = "pre_" + cat_var(jj);
+        post_lab = "post_" + cat_var(jj);
+        labs = cat_var(jj) + "_labels";
+        for i = 1:length(unique(clust_data.labels))
+            cluster_size(i) = sum(clust_data.labels == i);
+            for pre_cl = 1:length(ccg_data.(labs))
+                for post_cl = 1:length(ccg_data.(labs))
+                    cnt_cler_pair(i, pre_cl, post_cl) = sum((ccg_data.(pre_lab)(clust_data.labels ==i) == pre_cl & ccg_data.(post_lab)(clust_data.labels ==i) == post_cl) |...
+                        (ccg_data.(pre_lab)(clust_data.labels ==i) == post_cl & ccg_data.(post_lab)(clust_data.labels ==i) == pre_cl));
+                    norm_cler_pair(i, pre_cl, post_cl) = cnt_cler_pair(i, pre_cl, post_cl)/cluster_size(i);
+                end
+            end
+        end
         for pre_cl = 1:length(ccg_data.(labs))
             for post_cl = 1:length(ccg_data.(labs))
-                cnt_cler_pair(i, pre_cl, post_cl) = sum((ccg_data.(pre_lab)(clust_data.labels ==i) == pre_cl & ccg_data.(post_lab)(clust_data.labels ==i) == post_cl) |...
-                    (ccg_data.(pre_lab)(clust_data.labels ==i) == post_cl & ccg_data.(post_lab)(clust_data.labels ==i) == pre_cl));
-                norm_cler_pair(i, pre_cl, post_cl) = cnt_cler_pair(i, pre_cl, post_cl)/cluster_size(i);
-           end
-        end
-    end
-    for pre_cl = 1:length(ccg_data.(labs))
-        for post_cl = 1:length(ccg_data.(labs))
-            if post_cl<=pre_cl
-            figure('position', [  360.0000  445.0000  240.3333  173.0000]);
-            b = bar(1:clust_data.num_clusters,norm_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
-
-            hold on;
-            %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
-            set_axis_defaults();
-            set(gca, 'fontsize', 10);
-            ylab = ccg_data.(labs)(pre_cl) + " + " + ccg_data.(labs)(post_cl) + " cnt/clust. sz";
-            ylabel(ylab, 'fontsize', 10);
-            set(gca, 'xticklabel', {}, 'xtick', []);
-            xlim([.25, clust_data.num_clusters + .75])
-            set_axis_defaults();
-
-            figure('position', [  360.0000  445.0000  240.3333  173.0000]);
-            b = bar(1:clust_data.num_clusters,cnt_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
-
-            hold on;
-            %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
-            set_axis_defaults();
-            set(gca, 'fontsize', 10);
-            ylabel(ccg_data.(labs)(pre_cl) + " + " + ccg_data.(labs)(post_cl) + " cnt" , 'fontsize', 10);
-            set(gca, 'xticklabel', {}, 'xtick', []);
-            xlim([.25, clust_data.num_clusters + .75])
-            set_axis_defaults();
-
-            %overall chi2 test
-            in_pair = (ccg_data.(pre_lab) == pre_cl & ccg_data.(post_lab) == post_cl)|(ccg_data.(pre_lab) == post_cl & ccg_data.(post_lab) == pre_cl);
-            [tbl, chi2, p] = crosstab(clust_data.labels, in_pair);
-            if p<.05/60
-                text(1,1,'*', 'units', 'normalized', 'fontsize', 20);
-            end
-
-            %pairwise chi2 test
-            y = cnt_cler_pair(:,pre_cl, post_cl);
-            [m, i] = max(y);
-            for c_cnt = 1:clust_data.num_clusters
-                 sub_idx = clust_data.labels == i | clust_data.labels == c_cnt;
-                 [tbl, chi2, p] = crosstab(clust_data.labels(sub_idx), in_pair(sub_idx));
-                 if p<.05/60
-                    text(c_cnt,cnt_cler_pair(c_cnt,pre_cl, post_cl)+2,'*', 'units', 'data','horizontalalignment', 'center','fontsize', 14);
-                 end
-            end
-            save_close_figures(flag.figure_dir +erase(erase(erase(ylab, '/'),'.'),'\'));
+                if post_cl<=pre_cl
+                    figure('position', [  360.0000  445.0000  240.3333  173.0000]);
+                    b = bar(1:clust_data.num_clusters,norm_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
+                    
+                    hold on;
+                    %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
+                    set_axis_defaults();
+                    set(gca, 'fontsize', 10);
+                    ylab = ccg_data.(labs)(pre_cl) + " + " + ccg_data.(labs)(post_cl) + " cnt/clust. sz";
+                    ylabel(ylab, 'fontsize', 10);
+                    set(gca, 'xticklabel', {}, 'xtick', []);
+                    xlim([.25, clust_data.num_clusters + .75])
+                    set_axis_defaults();
+                    
+                    figure('position', [  360.0000  445.0000  240.3333  173.0000]);
+                    b = bar(1:clust_data.num_clusters,cnt_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
+                    
+                    hold on;
+                    %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
+                    set_axis_defaults();
+                    set(gca, 'fontsize', 10);
+                    ylabel(ccg_data.(labs)(pre_cl) + " + " + ccg_data.(labs)(post_cl) + " cnt" , 'fontsize', 10);
+                    set(gca, 'xticklabel', {}, 'xtick', []);
+                    xlim([.25, clust_data.num_clusters + .75])
+                    set_axis_defaults();
+                    
+                    %overall chi2 test
+                    in_pair = (ccg_data.(pre_lab) == pre_cl & ccg_data.(post_lab) == post_cl)|(ccg_data.(pre_lab) == post_cl & ccg_data.(post_lab) == pre_cl);
+                    [tbl, chi2, p] = crosstab(clust_data.labels, in_pair);
+                    if p<.05/60
+                        text(1,1,'*', 'units', 'normalized', 'fontsize', 20);
+                    end
+                    
+                    %pairwise chi2 test
+                    y = cnt_cler_pair(:,pre_cl, post_cl);
+                    [m, i] = max(y);
+                    for c_cnt = 1:clust_data.num_clusters
+                        sub_idx = clust_data.labels == i | clust_data.labels == c_cnt;
+                        [tbl, chi2, p] = crosstab(clust_data.labels(sub_idx), in_pair(sub_idx));
+                        if p<.05/60
+                            text(c_cnt,cnt_cler_pair(c_cnt,pre_cl, post_cl)+2,'*', 'units', 'data','horizontalalignment', 'center','fontsize', 14);
+                        end
+                    end
+                    save_close_figures(flag.figure_dir +erase(erase(erase(ylab, '/'),'.'),'\'));
+                end
             end
         end
     end
-end
-
-%% directed bar plots
-cat_var = ["cl", "sc", "ct"];
-cat_labs = ["laminae", "func type", "type"];
-for jj = 1:length(cat_var)
+    
+    %% directed bar plots
+    cat_var = ["cl", "sc", "ct"];
+    cat_labs = ["laminae", "func type", "type"];
+    for jj = 1:length(cat_var)
+        pre_lab = "pre_" + cat_var(jj);
+        post_lab = "post_" + cat_var(jj);
+        labs = cat_var(jj) + "_labels";
+        for i = 1:length(unique(clust_data.labels))
+            cluster_size(i) = sum(clust_data.labels == i);
+            for pre_cl = 1:length(ccg_data.(labs))
+                for post_cl = 1:length(ccg_data.(labs))
+                    cnt_cler_pair(i, pre_cl, post_cl) = sum((ccg_data.(pre_lab)(clust_data.labels ==i) == pre_cl & ccg_data.(post_lab)(clust_data.labels ==i) == post_cl));
+                    norm_cler_pair(i, pre_cl, post_cl) = cnt_cler_pair(i, pre_cl, post_cl)/cluster_size(i);
+                end
+            end
+        end
+        for pre_cl = 1:length(ccg_data.(labs))
+            for post_cl = 1:length(ccg_data.(labs))
+                figure('position', [  360.0000  445.0000  240.3333  173.0000]);
+                b = bar(1:clust_data.num_clusters,norm_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
+                
+                hold on;
+                %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
+                set_axis_defaults();
+                set(gca, 'fontsize', 10);
+                ylab = ccg_data.(labs)(pre_cl) + " to " + ccg_data.(labs)(post_cl) + " cnt/clust. sz";
+                ylabel(ylab, 'fontsize', 10);
+                set(gca, 'xticklabel', {}, 'xtick', []);
+                xlim([.25, clust_data.num_clusters + .75])
+                set_axis_defaults();
+                
+                figure('position', [360.0000  445.0000  240.3333  173.0000]);
+                b = bar(1:clust_data.num_clusters,cnt_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
+                
+                hold on;
+                %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
+                set_axis_defaults();
+                set(gca, 'fontsize', 10);
+                ylabel(ccg_data.(labs)(pre_cl) + " to " + ccg_data.(labs)(post_cl) + " cnt" , 'fontsize', 10);
+                set(gca, 'xticklabel', {}, 'xtick', []);
+                xlim([.25, clust_data.num_clusters + .75])
+                set_axis_defaults();
+                
+                %overall chi2 test
+                in_pair = (ccg_data.(pre_lab) == pre_cl & ccg_data.(post_lab) == post_cl);
+                [tbl, chi2, p] = crosstab(clust_data.labels, in_pair);
+                if p<.05/60
+                    text(1,1,'*', 'units', 'normalized', 'fontsize', 20);
+                end
+                
+                %pairwise chi2 test
+                y = cnt_cler_pair(:,pre_cl, post_cl);
+                [m, i] = max(y);
+                for c_cnt = 1:clust_data.num_clusters
+                    sub_idx = clust_data.labels == i | clust_data.labels == c_cnt;
+                    [tbl, chi2, p] = crosstab(clust_data.labels(sub_idx), in_pair(sub_idx));
+                    if p<.05/60
+                        text(c_cnt,cnt_cler_pair(c_cnt,pre_cl, post_cl)+2,'*', 'units', 'data','horizontalalignment', 'center','fontsize', 14);
+                    end
+                end
+                save_close_figures(flag.figure_dir +"zz" + erase(erase(erase(ylab, '/'),'.'),'\'));
+            end
+        end
+    end
+    
+    
+    %% directed bar plot intersections
+    cat_var = ["sc_x_cl"];
+    cat_labs = ["laminae x func type"];
+    pre_cl_is_4 = ccg_data.pre_cl == 2 | ccg_data.pre_cl == 3 | ccg_data.pre_cl == 4 ;
+    post_cl_is_23 = ccg_data.post_cl == 1;
+    pre_cl_is_23 = ccg_data.pre_cl == 1 ;
+    post_cl_is_4 = ccg_data.post_cl == 2 | ccg_data.post_cl == 3 | ccg_data.post_cl == 4 ;
+    
+    lay_labs = (pre_cl_is_4 + pre_cl_is_23*2);
+    tot_labs = lay_labs+3*(ccg_data.pre_sc-1);
+    ccg_data.pre_sc_x_cl = tot_labs+1;
+    
+    lay_labs = (post_cl_is_4 + post_cl_is_23*2);
+    tot_labs = lay_labs+3*(ccg_data.post_sc-1);
+    ccg_data.post_sc_x_cl = tot_labs+1;
+    
+    ccg_data.sc_x_cl_labels = ["not4 or 23,comp","4,comp", "2/3,comp","not4 or 23,simp","4,simp", "2/3,simp"];
+    
+    jj = 1;
     pre_lab = "pre_" + cat_var(jj);
     post_lab = "post_" + cat_var(jj);
     labs = cat_var(jj) + "_labels";
@@ -720,131 +801,51 @@ for jj = 1:length(cat_var)
     end
     for pre_cl = 1:length(ccg_data.(labs))
         for post_cl = 1:length(ccg_data.(labs))
-            figure('position', [  360.0000  445.0000  240.3333  173.0000]);
-            b = bar(1:clust_data.num_clusters,norm_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
-
-            hold on;
-            %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
-            set_axis_defaults();
-            set(gca, 'fontsize', 10);
-            ylab = ccg_data.(labs)(pre_cl) + " to " + ccg_data.(labs)(post_cl) + " cnt/clust. sz";
-            ylabel(ylab, 'fontsize', 10);
-            set(gca, 'xticklabel', {}, 'xtick', []);
-            xlim([.25, clust_data.num_clusters + .75])
-            set_axis_defaults();
-
-            figure('position', [360.0000  445.0000  240.3333  173.0000]);
-            b = bar(1:clust_data.num_clusters,cnt_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
-
-            hold on;
-            %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
-            set_axis_defaults();
-            set(gca, 'fontsize', 10);
-            ylabel(ccg_data.(labs)(pre_cl) + " to " + ccg_data.(labs)(post_cl) + " cnt" , 'fontsize', 10);
-            set(gca, 'xticklabel', {}, 'xtick', []);
-            xlim([.25, clust_data.num_clusters + .75])
-            set_axis_defaults();
-            
-            %overall chi2 test
-            in_pair = (ccg_data.(pre_lab) == pre_cl & ccg_data.(post_lab) == post_cl);
-            [tbl, chi2, p] = crosstab(clust_data.labels, in_pair);
-            if p<.05/60
-                text(1,1,'*', 'units', 'normalized', 'fontsize', 20);
-            end
-
-            %pairwise chi2 test
-            y = cnt_cler_pair(:,pre_cl, post_cl);
-            [m, i] = max(y);
-            for c_cnt = 1:clust_data.num_clusters
-                 sub_idx = clust_data.labels == i | clust_data.labels == c_cnt;
-                 [tbl, chi2, p] = crosstab(clust_data.labels(sub_idx), in_pair(sub_idx));
-                 if p<.05/60
-                    text(c_cnt,cnt_cler_pair(c_cnt,pre_cl, post_cl)+2,'*', 'units', 'data','horizontalalignment', 'center','fontsize', 14);
-                 end
-            end
-            save_close_figures(flag.figure_dir +"zz" + erase(erase(erase(ylab, '/'),'.'),'\'));
-        end
-    end
-end
-
-
-%% directed bar plot intersections
-cat_var = ["sc_x_cl"];
-cat_labs = ["laminae x func type"];
-pre_cl_is_4 = ccg_data.pre_cl == 2 | ccg_data.pre_cl == 3 | ccg_data.pre_cl == 4 ;
-post_cl_is_23 = ccg_data.post_cl == 1;
-pre_cl_is_23 = ccg_data.pre_cl == 1 ;
-post_cl_is_4 = ccg_data.post_cl == 2 | ccg_data.post_cl == 3 | ccg_data.post_cl == 4 ;
-
-lay_labs = (pre_cl_is_4 + pre_cl_is_23*2);
-tot_labs = lay_labs+3*(ccg_data.pre_sc-1);
-ccg_data.pre_sc_x_cl = tot_labs+1;
-
-lay_labs = (post_cl_is_4 + post_cl_is_23*2);
-tot_labs = lay_labs+3*(ccg_data.post_sc-1);
-ccg_data.post_sc_x_cl = tot_labs+1;
-
-ccg_data.sc_x_cl_labels = ["not4 or 23,comp","4,comp", "2/3,comp","not4 or 23,simp","4,simp", "2/3,simp"];
-
-jj = 1;
-pre_lab = "pre_" + cat_var(jj);
-post_lab = "post_" + cat_var(jj);
-labs = cat_var(jj) + "_labels";
-for i = 1:length(unique(clust_data.labels))
-    cluster_size(i) = sum(clust_data.labels == i);
-    for pre_cl = 1:length(ccg_data.(labs))
-        for post_cl = 1:length(ccg_data.(labs))
-            cnt_cler_pair(i, pre_cl, post_cl) = sum((ccg_data.(pre_lab)(clust_data.labels ==i) == pre_cl & ccg_data.(post_lab)(clust_data.labels ==i) == post_cl));
-            norm_cler_pair(i, pre_cl, post_cl) = cnt_cler_pair(i, pre_cl, post_cl)/cluster_size(i);
-        end
-    end
-end
-for pre_cl = 1:length(ccg_data.(labs))
-    for post_cl = 1:length(ccg_data.(labs))
-        if pre_cl ~= 1 && pre_cl ~= 4 && post_cl~=1 && post_cl ~=4
-            figure('position', [  360.0000  445.0000  240.3333  173.0000]);
-            b = bar(1:clust_data.num_clusters,norm_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
-            
-            hold on;
-            %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
-            set_axis_defaults();
-            set(gca, 'fontsize', 10);
-            ylab = ccg_data.(labs)(pre_cl) + " to " + ccg_data.(labs)(post_cl) + " cnt/clust. sz";
-            ylabel(ylab, 'fontsize', 10);
-            set(gca, 'xticklabel', {}, 'xtick', []);
-            xlim([.25, clust_data.num_clusters + .75])
-            set_axis_defaults();
-            
-            figure('position', [360.0000  445.0000  240.3333  173.0000]);
-            b = bar(1:clust_data.num_clusters,cnt_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
-            
-            hold on;
-            %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
-            set_axis_defaults();
-            set_axis_defaults();
-            set(gca, 'fontsize', 8);
-            ylabel(ccg_data.(labs)(pre_cl) + " to " + ccg_data.(labs)(post_cl) + " cnt" , 'fontsize', 10);
-            set(gca, 'xticklabel', {}, 'xtick', []);
-            xlim([.25, clust_data.num_clusters + .75])
-            
-            %overall chi2 test
-            in_pair = (ccg_data.(pre_lab) == pre_cl & ccg_data.(post_lab) == post_cl);
-            [tbl, chi2, p] = crosstab(clust_data.labels, in_pair);
-            if p<.05/60
-                text(1,1,'*', 'units', 'normalized', 'fontsize', 20);
-            end
-            
-            %pairwise chi2 test
-            y = cnt_cler_pair(:,pre_cl, post_cl);
-            [m, i] = max(y);
-            for c_cnt = 1:clust_data.num_clusters
-                sub_idx = clust_data.labels == i | clust_data.labels == c_cnt;
-                [tbl, chi2, p] = crosstab(clust_data.labels(sub_idx), in_pair(sub_idx));
+            if pre_cl ~= 1 && pre_cl ~= 4 && post_cl~=1 && post_cl ~=4
+                figure('position', [  360.0000  445.0000  240.3333  173.0000]);
+                b = bar(1:clust_data.num_clusters,norm_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
+                
+                hold on;
+                %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
+                set_axis_defaults();
+                set(gca, 'fontsize', 10);
+                ylab = ccg_data.(labs)(pre_cl) + " to " + ccg_data.(labs)(post_cl) + " cnt/clust. sz";
+                ylabel(ylab, 'fontsize', 10);
+                set(gca, 'xticklabel', {}, 'xtick', []);
+                xlim([.25, clust_data.num_clusters + .75])
+                set_axis_defaults();
+                
+                figure('position', [360.0000  445.0000  240.3333  173.0000]);
+                b = bar(1:clust_data.num_clusters,cnt_cler_pair(:,pre_cl, post_cl),'facecolor', 'flat', 'CData', cmap, 'edgecolor', 'w', 'linewidth', 2);
+                
+                hold on;
+                %errorbar(1:clust_data.num_clusters, at_mean.(attributes{k}), at_sem.(attributes{k}),'.k', 'linewidth', 1.2, 'markersize', 1);
+                set_axis_defaults();
+                set_axis_defaults();
+                set(gca, 'fontsize', 8);
+                ylabel(ccg_data.(labs)(pre_cl) + " to " + ccg_data.(labs)(post_cl) + " cnt" , 'fontsize', 10);
+                set(gca, 'xticklabel', {}, 'xtick', []);
+                xlim([.25, clust_data.num_clusters + .75])
+                
+                %overall chi2 test
+                in_pair = (ccg_data.(pre_lab) == pre_cl & ccg_data.(post_lab) == post_cl);
+                [tbl, chi2, p] = crosstab(clust_data.labels, in_pair);
                 if p<.05/60
-                    text(c_cnt,cnt_cler_pair(c_cnt,pre_cl, post_cl)+2,'*', 'units', 'data','horizontalalignment', 'center','fontsize', 14);
+                    text(1,1,'*', 'units', 'normalized', 'fontsize', 20);
                 end
+                
+                %pairwise chi2 test
+                y = cnt_cler_pair(:,pre_cl, post_cl);
+                [m, i] = max(y);
+                for c_cnt = 1:clust_data.num_clusters
+                    sub_idx = clust_data.labels == i | clust_data.labels == c_cnt;
+                    [tbl, chi2, p] = crosstab(clust_data.labels(sub_idx), in_pair(sub_idx));
+                    if p<.05/60
+                        text(c_cnt,cnt_cler_pair(c_cnt,pre_cl, post_cl)+2,'*', 'units', 'data','horizontalalignment', 'center','fontsize', 14);
+                    end
+                end
+                save_close_figures(flag.figure_dir +"zz" + erase(erase(erase(ylab, '/'),'.'),'\'));
             end
-            save_close_figures(flag.figure_dir +"zz" + erase(erase(erase(ylab, '/'),'.'),'\'));
         end
     end
 end

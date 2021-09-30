@@ -14,17 +14,18 @@ figure('position', [   360   198   314   500]);
 for neu = 1:size(sorted_sts,2)
     for time = -100:999
         if sorted_sts(time+101,neu)
-            plot([time,time],[neu,neu+1], 'linewidth', 2,'color', 'k');
+            plot([time,time],[neu,neu+1], 'linewidth', 1,'color', 'k');
             hold on;
         end
     end
 end
 xlim([400,1000]);
-ylim([1,size(sorted_sts,2)+50]);
-xline(0, '--k', 'linewidth', 2);
+ylim([1,size(sorted_sts,2)]);
+xline(0, '--k', 'linewidth', 1);
 set_axis_defaults();
 
-xlabel("time rel. to stim. onset (ms)", 'fontsize', 12);
-ylabel("<- closest - neuron to probe tip - farthest ->", 'fontsize', 12);
+%xlabel("time rel. to stim. onset (ms)", 'fontsize', 12);
+%ylabel("<- closest - neuron to probe tip - farthest ->", 'fontsize', 12);
 set(gca, 'fontsize', 12);
+set(gca, 'linewidth', 1);
 save_close_figures("figures\matlab\spike_raster");

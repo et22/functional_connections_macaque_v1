@@ -11,9 +11,10 @@ num_neus = zeros(flag.num_sessions(group_idx),1);
 num_pairs = zeros(flag.num_sessions(group_idx),1);
 for i = 1:flag.num_sessions(group_idx)
     clab = "c" + int2str(i);
-    op.(clab) = load(flag.output_dir + flag.ccg_output_file + int2str(i-1+flag.group_min_ses(group_idx))+".mat", 'ccg_output');
+    session_number = i-1+flag.group_min_ses(group_idx);
+    op.(clab) = load(flag.output_dir + flag.ccg_output_file + int2str(session_number)+".mat", 'ccg_output');
     % double check this with sessions 4 and 5
-    op.(clab).ccg_output.data = split_layers_at_mean(op.(clab).ccg_output.data, flag); 
+    op.(clab).ccg_output.data = split_layers_at_mean(op.(clab).ccg_output.data, flag, session_number); 
     op.(clab).ccg_output.data.Cluster_celldepth_scale = op.(clab).ccg_output.data.Cluster_celldepth;
     num_neus(i) = length(op.(clab).ccg_output.data.Cluster_celltype);
     num_pairs(i) = size(op.(clab).ccg_output.ccg_control,1);
