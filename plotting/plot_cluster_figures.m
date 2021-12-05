@@ -48,7 +48,7 @@ plot(expl_var*100, 'linewidth', 1.5, 'color', 'k');
 hold on;
 xline(clust_data.num_clusters, '--', 'linewidth', 1.5, 'color', 'k');
 xlim([1,10])
-set(gca, 'xtick', [1, 5, 10])
+set(gca, 'xtick', [1,4,10])
 %set(gca, 'ytick', []);
 set_axis_defaults()
 ylabel("explained variance (%)")

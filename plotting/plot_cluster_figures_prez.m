@@ -1,7 +1,7 @@
 %% load cluster output
 flag = config();
 
-for group_idx = 1:1%flag.group_cnt
+for group_idx = 1:flag.group_cnt
 clearvars -except flag group_idx
 if ~flag.augment
     load(flag.cluster_output(group_idx), 'clust_data');
@@ -9,13 +9,11 @@ else
     load(flag.augment_output, 'clust_data');
 end
 load(flag.postproc_output(group_idx), 'ccg_data');
-flag.figure_dir  = "figures/prez/"+flag.group_labels(group_idx) + flag.process_cluster(flag.process_flag)+ "/";
-if flag.augment
-    flag.figure_dir  = "figures/prez/"+flag.group_labels(group_idx) + flag.process_cluster(flag.process_flag)+ "augment/";
-end
+
 if ~exist(flag.figure_dir, 'dir')
     mkdir(flag.figure_dir)
 end
+
 %% subsetting ccg_data based on significance
 ccg_data = ccg_data.ccg;
 [ccg_data, sig_idx] = get_significant_ccgs(ccg_data, flag);
@@ -44,7 +42,7 @@ ylabel("silhouette value")
 xlabel("number of clusters")
 
 % calculating w_k
-for i = 1:10
+for i = 1:flag.max_k
     wss(i) = w_k(clust_data.tsne_mtx, clust_data.clusters(:,i));
 end
 expl_var = (wss(1)-wss)/wss(1); 
@@ -61,34 +59,34 @@ ylabel("explained variance (%)")
 xlabel("number of clusters")
 save_close_figures(flag.figure_dir + "silhouette") 
 
-%% plot cluster in 3D tSNE space
-figure('position', [445   113   457   387]);
-for i = 1:clust_data.num_clusters
-    curr_tsne_score = clust_data.tsne_mtx(clust_data.labels(1:length(clust_data.tsne_mtx))==i,:);
-    scatter3(curr_tsne_score(:,3), curr_tsne_score(:,1),curr_tsne_score(:,2),4, 'filled', 'MarkerFaceColor', cmap(i,:), 'MarkerEdgeColor', cmap(i,:))
-    hold on;
-end
-set_axis_defaults
-xlabel("t-SNE 3");
-ylabel("t-SNE 1");
-zlabel("t-SNE 2");
-%set(gca, 'view', [45,    180]);
-grid off;
-save_close_figures(flag.figure_dir + "3dscatter_tsne") 
-
-%% plot cluster in 2D tSNE space w/out axes
-%figure('position', [445   113   457   387]);
-figure('position',[97    32   645   595]);
-for i = 1:clust_data.num_clusters
-    curr_tsne_score = clust_data.tsne_mtx(clust_data.labels(1:length( clust_data.tsne_mtx))==i,:);
-    scatter(curr_tsne_score(:,1),curr_tsne_score(:,2),4, 'filled', 'MarkerFaceColor', cmap(i,:), 'MarkerEdgeColor', cmap(i,:))
-    hold on;
-end
-set_axis_defaults
-set(gca, 'Color', 'none','xtick',[], 'ytick',[])
-xlabel("t-SNE 1");
-ylabel("t-SNE 2");
-save_close_figures(flag.figure_dir + "2dscatter_tsne") 
+% %% plot cluster in 3D tSNE space
+% figure('position', [445   113   457   387]);
+% for i = 1:clust_data.num_clusters
+%     curr_tsne_score = clust_data.tsne_mtx(clust_data.labels(1:length(clust_data.tsne_mtx))==i,:);
+%     scatter3(curr_tsne_score(:,3), curr_tsne_score(:,1),curr_tsne_score(:,2),4, 'filled', 'MarkerFaceColor', cmap(i,:), 'MarkerEdgeColor', cmap(i,:))
+%     hold on;
+% end
+% set_axis_defaults
+% xlabel("t-SNE 3");
+% ylabel("t-SNE 1");
+% zlabel("t-SNE 2");
+% %set(gca, 'view', [45,    180]);
+% grid off;
+% save_close_figures(flag.figure_dir + "3dscatter_tsne") 
+% 
+% %% plot cluster in 2D tSNE space w/out axes
+% %figure('position', [445   113   457   387]);
+% figure('position',[97    32   645   595]);
+% for i = 1:clust_data.num_clusters
+%     curr_tsne_score = clust_data.tsne_mtx(clust_data.labels(1:length( clust_data.tsne_mtx))==i,:);
+%     scatter(curr_tsne_score(:,1),curr_tsne_score(:,2),4, 'filled', 'MarkerFaceColor', cmap(i,:), 'MarkerEdgeColor', cmap(i,:))
+%     hold on;
+% end
+% set_axis_defaults
+% set(gca, 'Color', 'none','xtick',[], 'ytick',[])
+% xlabel("t-SNE 1");
+% ylabel("t-SNE 2");
+% save_close_figures(flag.figure_dir + "2dscatter_tsne") 
 
 %% plot attributes x clusters
 plot_attributes_x_cluster(ccg_data,clust_data, cmap);
@@ -873,7 +871,6 @@ xlim([.25, clust_data.num_clusters + .75])
 ylim([min(mtime_to_fs)-.1*min(mtime_to_fs), max(mtime_to_fs)+.1*min(mtime_to_fs)]);
 set_axis_defaults();
 save_close_figures(flag.figure_dir +erase(erase(erase(ylab, '/'),'.'),'\'));
-
 
 figure('position', [  360.0000  445.0000  240.3333  173.0000]);
 for i = 1:clust_data.num_clusters
