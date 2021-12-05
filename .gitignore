@@ -2,3 +2,4 @@ figures/
 output/
 .ipynb_checkpoints/
 data/
+*.asv
