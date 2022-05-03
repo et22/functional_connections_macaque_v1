@@ -7,7 +7,7 @@ Raw and intermediate data is not currently included in the repository but will b
 
 
 ## Code organization 
-The main directory contains all scripts necessary to compute, cluster, postprocess, and plot CCGs. the `run_all` function executes each of these scrips in the order in which they should be executed, and executing `run_all` will generate all the results of the paper from the raw data. However, the computation of CCGs can take a substantial amount of time, so CCG analyses were run in parallel on multiple CPUs prior to running the other scripts. Here, we describe each of the scripts in the main directory: 
+The main directory contains all scripts necessary to compute, cluster, postprocess, and plot CCGs. The `run_all` function executes each of these scrips in the order in which they should be executed, and executing `run_all` will generate all the results of the paper from the raw data. However, the computation of CCGs can take a substantial amount of time, so CCG analyses were run in parallel on multiple CPUs prior to running the other scripts. Here, we describe each of the scripts in the main directory: 
 * `config` stores constants for the analyses
 * `compute_ccgs` computes all cross-correlograms for a given session. 
 * `postprocess` extracts relevant CCG attributes such as the peak, lag, and neuronal layer pairing for each CCG
