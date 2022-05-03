@@ -19,7 +19,7 @@ The main directory contains all scripts neccesary to compute, cluster, postproce
 The remaining folders contain various functions organized as follows: 
 
 ├───analysis - *helper functions for computing CCGs* \
-├───plotting - *helper functions for plotting* 
+├───plotting - *helper functions for plotting* \
 ├───helpers - *generic helper functions* \
 ├───data - *spike trains from recordings (not currently included)* \
 ├───output - *intermediate output from analyses (not currently included)*
