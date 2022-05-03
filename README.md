@@ -1,6 +1,6 @@
 # Functional Connections Among Neurons within Single Columns of Macaque V1
 ## Overview
-This repository contains the code necessary to analyze cross correlations from high-density recordings in macaque V1 and generate the figures for the paper, [Functional Connections Among Neurons within Single Columns of Macaque V1](https://www.biorxiv.org/content/10.1101/2022.02.18.481095v1).
+This repository contains code for analyzing cross-correlations between the spikes trains of pairs of neurons in macaque V1 and generating the figures for the paper, [Functional Connections Among Neurons within Single Columns of Macaque V1](https://www.biorxiv.org/content/10.1101/2022.02.18.481095v1).
 
 ## Data format 
 Raw and intermediate data is not currently included in the repository but will be added and described soon. Once data is included, the following directions can be used to replicate the results in the paper. 
