@@ -1,3 +1,4 @@
+%% This script generates plots for figures 6-7 regarding the distribution of clusters across layers.
 %% load cluster output
 flag = config();
 
@@ -52,6 +53,12 @@ plot_subplot(pre_layers, post_layers, figpath, moe_crit, chi_crit, cl_labels, cc
 pre_layers = ["4c\beta", "4c\alpha"];
 post_layers = ["4c\alpha", "4c\beta",];
 figpath="4ca + 4cb";
+plot_subplot(pre_layers, post_layers, figpath, moe_crit, chi_crit, cl_labels, ccg_data, cmap, clust_data)
+
+%spec params
+pre_layers = ["4c\alpha"];
+post_layers = ["4c\beta",];
+figpath="4ca to 4cb";
 plot_subplot(pre_layers, post_layers, figpath, moe_crit, chi_crit, cl_labels, ccg_data, cmap, clust_data)
 
 %spec params
@@ -164,6 +171,10 @@ text(.7,.7,"n = " + int2str(sum(inlayerpair)), 'units', 'normalized', 'fontsize'
 %overall chi2 test
 in_pair = inlayerpair;
 [tbl, chi2, p] = crosstab(clust_data.labels, in_pair);
+dof = (length(unique(clust_data.labels))-1)*1;
+n = sum(inlayerpair);
+disp(figpath + " cross tab: chi2=" + num2str(chi2) + ", p=" + p + ", dof=" + num2str(dof) + ", n=" + int2str(n));
+
 if p<chi_crit
     text(1,1,'*', 'units', 'normalized', 'fontsize', 20);
 end

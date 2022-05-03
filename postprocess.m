@@ -20,10 +20,6 @@ for i = 1:flag.num_sessions(group_idx)
     num_pairs(i) = size(op.(clab).ccg_output.ccg_control,1);
 end
 
-% layer/position scaling
-% ammend this fxn if want to combine depth across sessions
-%[op.c1.ccg_output.data, op.c2.ccg_output.data, op.c3.ccg_output.data, layer_centers] = scale_depth_by_layer(op.c3.ccg_output.data, op.c2.ccg_output.data, op.c1.ccg_output.data);
-
 % combining data across sessions
 vert_attributes = ["ccg_control", "ccg_unnorm", "ccg_norm_jitter", "ccg_norm"];
 vert_data_attributes = ["Cluster_MI_max", "Cluster_simpcomp"];

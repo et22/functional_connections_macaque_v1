@@ -30,15 +30,9 @@ switch flag.process_cluster(flag.process_flag)
 end
 
 % dimen. reduce
-if flag.pca
-    disp('starting pca...');
-    [~,Y,~,~,pca_op.explained,~] = pca(X, 'NumComponents', 20);
-    num_dims = find(cumsum(pca_op.explained)>80,1);
-    Y = Y(:,1:num_dims);
-else
-    disp('starting tsne...');
-    Y = tsne(X, 'NumDimensions', flag.tsne_dims); 
-end
+disp('starting tsne...');
+Y = tsne(X, 'NumDimensions', flag.tsne_dims); 
+
 
 % kmeans
 disp('starting clustering...');

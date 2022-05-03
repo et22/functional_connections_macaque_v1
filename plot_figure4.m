@@ -1,3 +1,4 @@
+%% This script generates plots for figure 4 of the manuscript displaying results from clustering.
 %% load cluster output
 flag = config();
 
@@ -30,6 +31,22 @@ clust_data.labels = sort_clusters_by_lag(clust_data.num_clusters, ccg_data.ccgs,
 
 rng(1);
 
+
+%% new plots
+%% silhouette score
+figure('position',  [   346   210   586   330]);
+plot(clust_data.sil_eva.CriterionValues, 'linewidth', 1.5, 'color', 'k');
+hold on;
+xline(clust_data.num_clusters, '--', 'linewidth', 1.5, 'color', 'k');
+xlim([2,10])
+set(gca, 'xtick', [2, 5, 10])
+%set(gca, 'ytick', []);
+set_axis_defaults()
+ylabel("silhouette value")
+xlabel("number of clusters")
+save_close_figures(flag.figure_dir + 'silscore') 
+
+%% distribution
 figure('position',[   97.0000   73.0000  630.6667  554.0000]);
 ccg_s = ccg_data.ccgs;
 score = clust_data.tsne_mtx;

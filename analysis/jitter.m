@@ -4,7 +4,9 @@ function output = jitter(data,l)
 %  0 means no spikes in that time bin and 1 indicates 
 %  a spike in that time bin.
 %
-%  modified s.t. first dimention should be trial number and second should be the time.
+%  TAKEN FROM: https://github.com/jiaxx/jitter
+%
+%  Modified s.t. first dimention should be trial number and second should be the time.
 data = data';
 
 data = single(data);

@@ -55,7 +55,6 @@ flag.kmeans_rep = 50;
 flag.kmeans_maxiter = 100;
 flag.fix_k = true;
 flag.k = 4;
-flag.pca = 0; % use tsne
 
 %where to save
 flag.filename = "";
@@ -78,11 +77,7 @@ for i = 1:flag.group_cnt
     else
         flag.postproc_output(i) = flag.output_dir + "ccg_attributes" + "_small_" + flag.group_labels(i) + ".mat";
     end
-    if ~flag.pca
-        flag.cluster_output(i) = flag.output_dir + "cluster_output" + flag.group_labels(i) + flag.process_cluster(flag.process_flag)+ ".mat";
-    else
-        flag.cluster_output(i) = flag.output_dir + "cluster_output" + flag.group_labels(i) + flag.process_cluster(flag.process_flag)+ "pca.mat";        
-    end
+    flag.cluster_output(i) = flag.output_dir + "cluster_output" + flag.group_labels(i) + flag.process_cluster(flag.process_flag)+ ".mat";
 end
 
 
@@ -108,9 +103,6 @@ if flag.augment
     flag.figure_dir  = "figures/prez/"+flag.group_labels(group_idx) + flag.process_cluster(flag.process_flag)+ "augment/";
 end
 
-if flag.pca
-    flag.figure_dir = flag.figure_dir + "pca/";
-end
 % plotting
 flag.plot_all_bars = false;
 
