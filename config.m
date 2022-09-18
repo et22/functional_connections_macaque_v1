@@ -58,7 +58,7 @@ flag.k = 4;
 
 %where to save
 flag.filename = "";
-flag.date = '25-Aug-2021';%date;
+flag.date = 'final';
 if ~flag.debug_mode
     flag.output_dir = "output/" + flag.date + "/";
 else
@@ -70,6 +70,7 @@ flag.ccg_output_file = "ccg_output_";
 flag.process_cluster = ["", "mean_center", "zscore", "l2norm"];
 flag.process_flag = 3;
 
+flag.large_output = 1;
 
 for i = 1:flag.group_cnt
     if flag.large_output
@@ -80,29 +81,6 @@ for i = 1:flag.group_cnt
     flag.cluster_output(i) = flag.output_dir + "cluster_output" + flag.group_labels(i) + flag.process_cluster(flag.process_flag)+ ".mat";
 end
 
-
-
-% cluster augmentation
-flag.augment = false;
-
-flag.augment_base_path = flag.output_dir + "ccg_attributes" + "_large_monkey 1.mat";
-flag.augment_cluster_path = flag.output_dir + "cluster_output" + "monkey 1" + flag.process_cluster(flag.process_flag)+ ".mat";
-flag.augment_augment_path = flag.output_dir + "ccg_attributes" + "_large_monkey 2.mat";
-
-flag.augment_methods = ["naive_distance"];
-flag.augment_methods_flag = 1;
-
-flag.augment_output = flag.output_dir + "augment_output" + flag.process_cluster(flag.process_flag)+ ".mat";
-
 % figure dir
-flag.figure_dir = "figures/matlab/";
-
 group_idx = 1;
-flag.figure_dir  = "figures/prez/"+flag.group_labels(group_idx) + flag.process_cluster(flag.process_flag)+ "/";
-if flag.augment
-    flag.figure_dir  = "figures/prez/"+flag.group_labels(group_idx) + flag.process_cluster(flag.process_flag)+ "augment/";
-end
-
-% plotting
-flag.plot_all_bars = false;
-
+flag.figure_dir  = "figures/";

@@ -15,8 +15,15 @@ for j = 1:size(data_subset, 3)
     data_subset_real{j} = data_subset(:,:,j);
 end
 
+tic
 % change to for if do not want to use multiple cpus
 parfor j = 1:size(data_subset,3)
+    ccgs{j}.ccg_norm = nan(2*(size(data_subset,3)-j),flag.max_lag-flag.min_lag+1);
+    ccgs{j}.ccg_unnorm = nan(2*(size(data_subset,3)-j),flag.max_lag-flag.min_lag+1); 
+    ccgs{j}.ccg_norm_jitter = nan(2*(size(data_subset,3)-j),flag.max_lag-flag.min_lag+1);
+    ccgs{j}.ccg_unnorm_jitter = nan(2*(size(data_subset,3)-j),flag.max_lag-flag.min_lag+1);
+    ccgs{j}.neuron_id_pairs = nan(2*(size(data_subset,3)-j),2);
+
     disp("processing neuron: " + j);
     cnt = 0;
     for k = j+1:size(data_subset,3)
@@ -35,7 +42,9 @@ parfor j = 1:size(data_subset,3)
         end
     end
 end
+toc
 
+tic
 % aggregate ccgs into ccg output struct
 fields = fieldnames(ccgs{1});
 for j = 1:length(fields)
@@ -47,6 +56,7 @@ for i = 2:size(data_subset,3)-1
         ccg_output.(fields{j}) = [ccg_output.(fields{j}); ccgs{i}.(fields{j})];
     end
 end
+toc
 
 % ccg control is base - jitter
 ccg_output.ccg_control = ccg_output.ccg_norm-ccg_output.ccg_norm_jitter;

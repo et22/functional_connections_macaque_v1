@@ -4,17 +4,15 @@ flag = config();
 
 for group_idx = 1:flag.group_cnt
 clearvars -except flag group_idx
-if ~flag.augment
-    load(flag.cluster_output(group_idx), 'clust_data');
-else
-    load(flag.augment_output, 'clust_data');
-end
+
+load(flag.cluster_output(group_idx), 'clust_data');
 load(flag.postproc_output(group_idx), 'ccg_data');
 
 if ~exist(flag.figure_dir, 'dir')
     mkdir(flag.figure_dir)
 end
 
+flag.figure_dir = flag.figure_dir + "fig4_";
 %% subsetting ccg_data based on significance
 ccg_data = ccg_data.ccg;
 [ccg_data, sig_idx] = get_significant_ccgs(ccg_data, flag);
@@ -45,6 +43,19 @@ set_axis_defaults()
 ylabel("silhouette value")
 xlabel("number of clusters")
 save_close_figures(flag.figure_dir + 'silscore') 
+
+%% wss score
+figure('position',  [   346   210   586   330]);
+plot((clust_data.wss(1)-clust_data.wss)/clust_data.wss(1), 'linewidth', 1.5, 'color', 'k');
+hold on;
+xline(clust_data.num_clusters, '--', 'linewidth', 1.5, 'color', 'k');
+xlim([1,10])
+set(gca, 'xtick', [1, 5, 10])
+%set(gca, 'ytick', []);
+set_axis_defaults()
+ylabel("silhouette value")
+xlabel("number of clusters")
+save_close_figures(flag.figure_dir + 'wssscore') 
 
 %% distribution
 figure('position',[   97.0000   73.0000  630.6667  554.0000]);
@@ -108,7 +119,7 @@ set(gca, 'Color', 'none') %,'xtick',[], 'ytick',[]
 xlabel("t-SNE 1");
 ylabel("t-SNE 2");
 set(gca, 'Color', 'none', 'XColor', 'none', 'YColor', 'none', 'xtick',[], 'ytick',[])
-save_close_figures(flag.figure_dir + 'temp') 
+save_close_figures(flag.figure_dir + 'tsne') 
 
 
 %% plt ccg templates no axes

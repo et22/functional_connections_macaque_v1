@@ -1,5 +1,10 @@
+addpath(genpath(pwd));
+
 % compute ccgs and run all analyses
 flag = config();
+
+% save config file to load in python
+save(append(flag.output_dir, 'config.mat'), '-struct', 'flag');
 
 % computing
 for i = 1:flag.num_sessions
@@ -13,6 +18,6 @@ postprocess()
 compute_clusters()
 
 %plotting
-plot_figure4()
-plot_figure5()
-plot_figures67()
+plot_all()
+
+%all other plots can be generated using the plot_figues123.ipynb folder
