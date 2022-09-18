@@ -23,7 +23,7 @@ Here, we describe each of the scripts in the main directory:
 * `plot_distribution` plots the supplemental figure showing the distribution of clusters across layers
 * `plot_figures123.ipynb` is a jupyter notebook that contains code necessary for plotting the first three main figures and various supplementary figures
 
-The remaining folders are organized as follows: 
+The remaining folders are organized as follows: *\
 ├───analysis - *helper functions for computing CCGs* \
 ├───helpers - *generic helper functions* \
 ├───data - *spike trains from recordings (not currently included)* \
