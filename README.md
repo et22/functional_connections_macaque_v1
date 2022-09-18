@@ -6,7 +6,7 @@ This repository contains code for analyzing cross-correlations between the spike
 Here, we include intermediate data files in the `output` directory that can be used to replicate all figures. The intermediate files contain the cross-correlograms for all pairs of neurons and the output of clustering these cross-correlograms. 
 
 ## Reproducing figures
-To reproduce all figures, clone the repo and run `plot_all.m` in MATLAB and `plot_figures123.ipynb` in Jupyter Notebook or VS code.
+To reproduce all figures, clone the repo and run `plot_all.m` in MATLAB and `plot_figures123.ipynb` in Jupyter Notebook or VS code. Note that the boxplots in plot_figure5 require MATLAB 2022a or later, but all other plots work in earlier versions of MATLAB as well. 
 
 ## Reproducing all analyses from raw data
 Raw data has been deposited as described in the publication, and can be used to reproduce the results.
