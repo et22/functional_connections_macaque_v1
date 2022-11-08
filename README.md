@@ -1,6 +1,9 @@
 # Functional Connections Among Neurons within Single Columns of Macaque V1
 ## Overview
-This repository contains code for analyzing cross-correlations between the spikes trains of pairs of neurons in macaque V1 and generating the figures for the paper, [Functional Connections Among Neurons within Single Columns of Macaque V1](https://www.biorxiv.org/content/10.1101/2022.02.18.481095v1).
+This repository contains code for analyzing cross-correlations between the spikes trains of pairs of neurons in macaque V1 and generating the figures for the following paper:
+
+Trepka, Zhu et al., (2022) Functional Interactions Among Neurons within Single Columns of Macaque V1. eLife 11:e79322.
+https://doi.org/10.7554/eLife.79322
 
 ## Data format 
 Here, we include intermediate data files in the `output` directory that can be used to replicate all figures. The intermediate files contain the cross-correlograms for all pairs of neurons and the output of clustering these cross-correlograms. 
